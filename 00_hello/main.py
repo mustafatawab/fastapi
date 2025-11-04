@@ -1,6 +1,7 @@
-def main():
-    print("Hello from 00-hello!")
+from fastapi import FastAPI
 
+app: FastAPI = FastAPI()
 
-if __name__ == "__main__":
-    main()
+@app.get("/")
+async def home():
+    return {"message" : "Hello World"}
