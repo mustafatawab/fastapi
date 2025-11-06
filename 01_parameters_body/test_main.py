@@ -14,3 +14,10 @@ def test_limited_items():
     res = client.get("/items?limit=10")
     assert res.status_code == 200
     assert res.json() == {"limit" : 10}
+
+
+def test_create_item():
+    client = TestClient(app=app)
+    res = client.post("/items" , json={"name" : "watch" , "price" : 4300})
+    assert res.status_code == 200
+    assert res.json() == {"name" : "watch" , "price" : 4300}
