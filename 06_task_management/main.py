@@ -6,10 +6,11 @@ from dotenv import load_dotenv, find_dotenv
 import os
 from contextlib import asynccontextmanager 
 from datetime import datetime, date
+from config import get_settings , Settings
+from database import create_tables, get_session
 
 
-
-load_dotenv()
+# load_dotenv()
 
 
 
@@ -19,9 +20,9 @@ load_dotenv()
 
 class Tasks(SQLModel, table=True):
     id : int | None = Field(default=None , primary_key=True)
-    title : str
-    created_at : str | None = None
-    completed : bool = False
+    title : str = Field(min_length=1 , max_length=200)
+    created_at : datetime = Field(default=datetime.utcnow())
+    completed : bool = Field(default=False)
 
 class TaskCreate(BaseModel):
     title : str
@@ -38,22 +39,23 @@ class TaskReponse(BaseModel):
 
 
 # -----------
-database_url = os.getenv("DATABASE_URL")
+# database_url = os.getenv("DATABASE_URL")
 
 # connection_string = str(database_url).replace("postgresql" , "postgresql+psycopg")
 
-engine = create_engine(database_url , echo=True)
+# settings = get_settings()
+# engine = create_engine(settings.database_url , echo=True)
 # --------
-def create_tables():
-    print("Creating tables in the database......")
-    SQLModel.metadata.create_all(engine)
-    print("Tables created successfully.")
+# def create_tables():
+#     print("\nCreating tables in the database......")
+#     SQLModel.metadata.create_all(engine)
+#     print("Tables created successfully.")
 
 # -----------
 
-async def get_session():
-    with Session(engine) as session:
-        yield session
+# async def get_session():
+#     with Session(engine) as session:
+#         yield session
 
 # -----------
 @asynccontextmanager
@@ -64,6 +66,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="Task Management API", version="1.0.0")
 # ------------------------------------------
+
+
 
 
 @app.get("/")
@@ -82,7 +86,6 @@ async def create_task(task: TaskCreate , session : Session = Depends(get_session
     session.commit()
     session.refresh(new_task)
     return new_task
-
 
 
 
