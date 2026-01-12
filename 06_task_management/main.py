@@ -4,6 +4,10 @@ from typing import List, Optional, Literal
 from sqlmodel import create_engine, Session , select, SQLModel, Field
 from dotenv import load_dotenv, find_dotenv
 import os
+from contextlib import asynccontextmanager 
+from datetime import datetime, date
+
+
 
 load_dotenv()
 
@@ -12,6 +16,19 @@ class Tasks(SQLModel, table=True):
     title : str
     created_at : str | None = None
     completed : bool = False
+
+class TaskCreate(BaseModel):
+    title : str
+
+class TaskUpdate(BaseModel):
+    title : Optional[str] = None
+    completed : Optional[bool] = None
+
+class TaskReponse(BaseModel):
+    id : int
+    title : str
+    created_at : str
+    completed : bool
 
 database_url = os.getenv("DATABASE_URL")
 
@@ -29,7 +46,12 @@ async def get_session():
         yield session
 
 
-app = FastAPI()
+def lifespan(app: FastAPI):
+    create_tables()
+    yield
+    # Any cleanup code can go here if needed
+
+app = FastAPI(lifespan=lifespan, title="Task Management API", version="1.0.0")
 
 @app.get("/health")
 async def health_check():
@@ -37,14 +59,14 @@ async def health_check():
 
 
 
-@app.post("/tasks", response_model=Tasks)
-async def create_task(task: Tasks , session : Session = Depends(get_session)):
-    session.add(task)
+@app.post("/tasks", response_model=TaskReponse)
+async def create_task(task: TaskCreate , session : Session = Depends(get_session)):
+    created_at = date.today()
+    new_task = Tasks(title=task.title, created_at=str(created_at) , completed=False)
+    session.add(new_task)
     session.commit()
-    session.refresh(task)
-    return task
-
-
+    session.refresh(new_task)
+    return new_task
 
 @app.get("/tasks" , response_model=List[Tasks])
 async def get_all_tasks(session : Session = Depends(get_session)):
