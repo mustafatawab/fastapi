@@ -11,6 +11,12 @@ from datetime import datetime, date
 
 load_dotenv()
 
+
+
+# -----------------
+
+
+
 class Tasks(SQLModel, table=True):
     id : int | None = Field(default=None , primary_key=True)
     title : str
@@ -27,40 +33,49 @@ class TaskUpdate(BaseModel):
 class TaskReponse(BaseModel):
     id : int
     title : str
-    created_at : str
+    created_at : str | None = None
     completed : bool
 
+
+# -----------
 database_url = os.getenv("DATABASE_URL")
 
 # connection_string = str(database_url).replace("postgresql" , "postgresql+psycopg")
 
 engine = create_engine(database_url , echo=True)
-
+# --------
 def create_tables():
     print("Creating tables in the database......")
     SQLModel.metadata.create_all(engine)
     print("Tables created successfully.")
 
+# -----------
+
 async def get_session():
     with Session(engine) as session:
         yield session
 
-
-def lifespan(app: FastAPI):
+# -----------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     create_tables()
     yield
-    # Any cleanup code can go here if needed
+# -----------
 
 app = FastAPI(lifespan=lifespan, title="Task Management API", version="1.0.0")
+# ------------------------------------------
 
-@app.get("/health")
+
+@app.get("/")
 async def health_check():
     return {"status" : "healthy"}
 
 
 
+
+
 @app.post("/tasks", response_model=TaskReponse)
-async def create_task(task: TaskCreate , session : Session = Depends(get_session)):
+async def create_task(task: TaskCreate , session : Session = Depends(get_session)) -> TaskReponse:
     created_at = date.today()
     new_task = Tasks(title=task.title, created_at=str(created_at) , completed=False)
     session.add(new_task)
@@ -68,23 +83,31 @@ async def create_task(task: TaskCreate , session : Session = Depends(get_session
     session.refresh(new_task)
     return new_task
 
-@app.get("/tasks" , response_model=List[Tasks])
-async def get_all_tasks(session : Session = Depends(get_session)):
+
+
+
+
+@app.get("/tasks" , response_model=List[TaskReponse])
+async def get_all_tasks(session : Session = Depends(get_session)) -> List[TaskReponse]:
     tasks = session.exec(select(Tasks)).all()
-    if not tasks:
-        raise HTTPException(status_code=404 , detail="No tasks found")
     return tasks
 
 
-@app.get("/tasks/{task_id}" , response_model=Tasks)
-async def get_single_task(task_id: int , session: Session = Depends(get_session)):
+
+
+
+@app.get("/tasks/{task_id}" , response_model=TaskReponse)
+async def get_single_task(task_id: int , session: Session = Depends(get_session)) -> TaskReponse:
     task = session.get(Tasks, task_id)
     if not task:
         raise HTTPException(status_code=404 , detail="Task not found")
     return task
 
-@app.put("/tasks/{task_id}" , response_model=Tasks)
-async def update_task(task_id: int , task: Tasks , session: Session = Depends(get_session)):
+
+
+
+@app.put("/tasks/{task_id}" , response_model=TaskReponse    )
+async def update_task(task_id: int , task: TaskUpdate , session: Session = Depends(get_session)) -> TaskReponse:
     existing_task = session.get(Tasks , task_id)
     if not existing_task:
         raise HTTPException(status_code=404 , detail="Task not found")
@@ -95,21 +118,42 @@ async def update_task(task_id: int , task: Tasks , session: Session = Depends(ge
     session.refresh(existing_task)
     return existing_task
 
-@app.put("/tasks/{task_id}/complete" , response_model=Tasks)
-async def mark_task_complete(task_id: int , completed: Literal[True, False], session: Session = Depends(get_session)):
+
+
+@app.patch("/tasks/{task_id}/complete" , response_model=TaskReponse)
+async def mark_task_complete(task_id: int , session: Session = Depends(get_session)) -> TaskReponse:
     task = session.get(Tasks, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    task.completed = completed
+    if task.completed:
+        raise HTTPException(status_code=400, detail="Task is already completed")
+    task.completed = True
     session.add(task)
     session.commit()
     session.refresh(task)
     return task
 
 
-@app.delete("/tasks/{task_id}" , response_model=dict)
-async def delete_task(task_id: int , session: Session = Depends(get_session)):
-    task = session.get(Task, task_id)
+
+@app.patch("/tasks/{task_id}/incomplete" , response_model=TaskReponse)
+async def mark_task_incomplete(task_id: int, session: Session = Depends(get_session)) -> TaskReponse:
+    task = session.get(Tasks, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if not task.completed:
+        raise HTTPException(status_code=402, detail="Task is already completed as False")
+    task.completed = False
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
+
+
+
+
+@app.delete("/tasks/{task_id}" , response_model=dict[str, str])
+async def delete_task(task_id: int , session: Session = Depends(get_session)) -> dict[str, str]:
+    task = session.get(Tasks, task_id)
     if not task:
         raise HTTPException(status_code=404 , detail="Task not found")
     session.delete(task)
