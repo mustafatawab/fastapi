@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import List, Optional, Literal
 from sqlmodel import create_engine, Session , select, SQLModel, Field
@@ -31,6 +31,9 @@ class UserCreate(BaseModel):
     email : EmailStr
     password : str
 
+class UserLogin(BaseModel):
+    email : EmailStr
+    password : str
 
 class Tasks(SQLModel, table=True):
     id : int | None = Field(default=None , primary_key=True)
@@ -90,7 +93,7 @@ app = FastAPI(lifespan=lifespan, title="Task Management API", version="1.0.0")
 async def register_user(user: UserCreate, session: Session = Depends(get_session)):
     existing_user = session.exec(select(User).where(User.email == user.email)).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     hashed_password = hash_password(user.password)
     new_user = User(name=user.name ,email=user.email , password=hashed_password)
     session.add(new_user)
@@ -100,6 +103,16 @@ async def register_user(user: UserCreate, session: Session = Depends(get_session
     
 
 
+@app.post("/auth/login", response_model=dict[str, str])
+async def login_user(user: UserLogin, session: Session = Depends(get_session)):
+    existing_user = session.get(User, user.email)
+    if not existing_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    if not verify_password(user.password, existing_user.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    return {"detail": "Login successful."}
 
 
 
