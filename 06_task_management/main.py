@@ -2,12 +2,14 @@ from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Literal
 from sqlmodel import create_engine, Session , select, SQLModel, Field
+from pydantic import EmailStr
 from dotenv import load_dotenv, find_dotenv
 import os
 from contextlib import asynccontextmanager 
 from datetime import datetime, date
 from config import get_settings , Settings
 from database import create_tables, get_session
+from hash import hash_password, verify_password
 
 
 # load_dotenv()
@@ -16,6 +18,18 @@ from database import create_tables, get_session
 
 # -----------------
 
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None , primary_key=True)
+    name : str = Field(min_length=1 , max_length=100)
+    email: EmailStr = Field(index=True , unique=True)
+    created_at : datetime = Field(default=datetime.utcnow())
+    password : str = Field(min_length=8)
+
+
+class UserCreate(BaseModel):
+    name : str
+    email : EmailStr
+    password : str
 
 
 class Tasks(SQLModel, table=True):
@@ -23,6 +37,9 @@ class Tasks(SQLModel, table=True):
     title : str = Field(min_length=1 , max_length=200)
     created_at : datetime = Field(default=datetime.utcnow())
     completed : bool = Field(default=False)
+    userId: int | None = Field(default=None, foreign_key="user.id")
+
+
 
 class TaskCreate(BaseModel):
     title : str
@@ -60,7 +77,7 @@ class TaskReponse(BaseModel):
 # -----------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    create_tables()
+    await create_tables()
     yield
 # -----------
 
@@ -69,10 +86,18 @@ app = FastAPI(lifespan=lifespan, title="Task Management API", version="1.0.0")
 
 
 
-
-@app.get("/")
-async def health_check():
-    return {"status" : "healthy"}
+@app.post("/auth/register", response_model=dict[str, str])
+async def register_user(user: UserCreate, session: Session = Depends(get_session)):
+    existing_user = session.exec(select(User).where(User.email == user.email)).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    hashed_password = hash_password(user.password)
+    new_user = User(name=user.name ,email=user.email , password=hashed_password)
+    session.add(new_user)
+    session.commit()
+    session.refresh(new_user)
+    return {"detail": "User registered successfully."}
+    
 
 
 
