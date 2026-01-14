@@ -91,6 +91,7 @@ app = FastAPI(lifespan=lifespan, title="Task Management API", version="1.0.0")
 
 @app.post("/auth/register", response_model=dict[str, str])
 async def register_user(user: UserCreate, session: Session = Depends(get_session)):
+    
     existing_user = session.exec(select(User).where(User.email == user.email)).first()
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
