@@ -95,6 +95,10 @@ app.include_router(tasks_router)
 # ------------------------------------------
 
 
+@app.get("/health")
+def check_health():
+    return {"status" : "healthy"}
+
 
 # @app.post("/auth/register", response_model=dict[str, str])
 # async def register_user(user: UserCreate, session: Session = Depends(get_session)):
