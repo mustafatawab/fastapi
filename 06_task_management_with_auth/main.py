@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import List, Optional, Literal
 from sqlmodel import create_engine, Session , select, SQLModel, Field
@@ -10,7 +11,7 @@ from datetime import datetime, date
 from config import get_settings , Settings
 from database import create_tables, get_session
 from hash import hash_password, verify_password
-
+from encrypt import create_access_token, verify_access_token
 
 # load_dotenv()
 
@@ -106,14 +107,17 @@ async def register_user(user: UserCreate, session: Session = Depends(get_session
 
 @app.post("/auth/login", response_model=dict[str, str])
 async def login_user(user: UserLogin, session: Session = Depends(get_session)):
-    existing_user = session.get(User, user.email)
+    print("\n Login attempt for email:", user.email)  # Debugging line
+    existing_user = session.exec(select(User).where(User.email == user.email)).first()
     if not existing_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
     if not verify_password(user.password, existing_user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    return {"detail": "Login successful."}
+    token = create_access_token(data={"user_id": existing_user.id, "email": existing_user.email })
+
+    return {"access_token": token, "token_type": "bearer"}
 
 
 
