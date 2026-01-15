@@ -1,32 +1,31 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, SQLModel, Field
-from datetime import datetime, timedelta
-from config import get_settings
 from database import get_session
-from pydantic import BaseModel, EmailStr
 from hash import hash_password, verify_password
 from encrypt import create_access_token, verify_access_token
+from models.users import User, UserCreate, UserLogin
+
 
 router = APIRouter(prefix="/auth", tags=['auth'])
 
 
 
-class User(SQLModel, table=True):
-    id: int | None = Field(default=None , primary_key=True)
-    name : str = Field(min_length=1 , max_length=100)
-    email: EmailStr = Field(index=True , unique=True)
-    created_at : datetime = Field(default=datetime.utcnow())
-    password : str = Field(min_length=8)
+# class User(SQLModel, table=True):
+#     id: int | None = Field(default=None , primary_key=True)
+#     name : str = Field(min_length=1 , max_length=100)
+#     email: EmailStr = Field(index=True , unique=True)
+#     created_at : datetime = Field(default=datetime.utcnow())
+#     password : str = Field(min_length=8)
 
 
-class UserCreate(BaseModel):
-    name : str
-    email : EmailStr
-    password : str
+# class UserCreate(BaseModel):
+#     name : str
+#     email : EmailStr
+#     password : str
 
-class UserLogin(BaseModel):
-    email : EmailStr
-    password : str
+# class UserLogin(BaseModel):
+#     email : EmailStr
+#     password : str
 
 
 

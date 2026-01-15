@@ -1,17 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
-from typing import List, Optional, Literal
-from sqlmodel import create_engine, Session , select, SQLModel, Field
-from pydantic import EmailStr
-from dotenv import load_dotenv, find_dotenv
-import os
+from fastapi import FastAPI
 from contextlib import asynccontextmanager 
-from datetime import datetime, date
-from config import get_settings , Settings
-from database import create_tables, get_session
-from hash import hash_password, verify_password
-from encrypt import create_access_token, verify_access_token
+from database import create_tables
 from routers.auth import router as auth_router
 from routers.tasks import router as tasks_router
 
