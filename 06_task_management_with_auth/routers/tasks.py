@@ -1,9 +1,7 @@
-from pydantic import BaseModel
-from typing import List, Optional
 from sqlmodel import SQLModel, Field, Session, select
-from datetime import datetime, timedelta, date
-from database import get_session, get_current_user
-from config import get_settings
+from datetime import  date
+from database import get_session
+from core.dependency import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, status
 from routers.auth import User
 from models.tasks import Tasks, TaskReponse, TaskCreate, TaskUpdate

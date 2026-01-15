@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, SQLModel, Field
 from database import get_session
-from hash import hash_password, verify_password
-from encrypt import create_access_token, verify_access_token
+from core.security import hash_password, verify_password ,create_access_token, verify_access_token
 from models.users import User, UserCreate, UserLogin
 
 
