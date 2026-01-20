@@ -6,9 +6,9 @@ from datetime import datetime
 class Tasks(SQLModel, table=True):
     id : int | None = Field(default=None , primary_key=True)
     title : str = Field(min_length=1 , max_length=200)
-    created_at : datetime = Field(default=datetime.utcnow())
+    created_at :  str = Field(default=str(datetime.utcnow()))
     completed : bool = Field(default=False)
-    userId: int | None = Field(default=None, foreign_key="user.id")
+    userId: int | None = Field(foreign_key="user.id")
 
 
 
@@ -17,11 +17,11 @@ class TaskCreate(BaseModel):
 
 class TaskUpdate(BaseModel):
     title : str | None = None
-    completed : bool | None = None
+    
 
 class TaskReponse(BaseModel):
     id : int
     title : str
-    created_at : str | None = None
+    created_at : str 
     completed : bool
 

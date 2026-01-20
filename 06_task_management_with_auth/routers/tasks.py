@@ -43,7 +43,7 @@ router = APIRouter(
 @router.post("/", response_model=TaskReponse)
 async def create_task(task: TaskCreate ,current_user: User = Depends(get_current_user), session : Session = Depends(get_session)) -> TaskReponse:
     created_at = date.today()
-    new_task = Tasks(title=task.title, created_at=str(created_at) , completed=False, userId=current_user.id)
+    new_task = Tasks(title=task.title, created_at=created_at, completed=False, userId=current_user.id)
     session.add(new_task)
     session.commit()
     session.refresh(new_task)
@@ -61,9 +61,9 @@ async def get_all_tasks(current_user: User = Depends(get_current_user),session :
 
 
 
-@router.get("/{task_id}" , response_model=TaskReponse)
+@router.get("/{task_id}")
 async def get_single_task(task_id: int ,current_user: User = Depends(get_current_user), session: Session = Depends(get_session)) -> TaskReponse:
-    task = session.exec(select(Tasks).where(Tasks.userId == current_user and Tasks.id == task_id))
+    task = session.exec(select(Tasks).where(Tasks.userId == current_user.id , Tasks.id == task_id)).first()
     if not task:
         raise HTTPException(status_code=404 , detail="Task not found")
     return task
@@ -73,11 +73,10 @@ async def get_single_task(task_id: int ,current_user: User = Depends(get_current
 
 @router.put("/{task_id}" , response_model=TaskReponse    )
 async def update_task(task_id: int , task: TaskUpdate ,current_user: User = Depends(get_current_user), session: Session = Depends(get_session)) -> TaskReponse:
-    existing_task = session.exec(select(Tasks).where(Tasks.userId == current_user and Tasks.id == task_id))
+    existing_task = session.exec(select(Tasks).where(Tasks.userId == current_user.id , Tasks.id == task_id)).first()
     if not existing_task:
         raise HTTPException(status_code=404 , detail="Task not found")
     existing_task.title = task.title
-    existing_task.completed = task.completed
     session.add(existing_task)
     session.commit()
     session.refresh(existing_task)
@@ -87,7 +86,7 @@ async def update_task(task_id: int , task: TaskUpdate ,current_user: User = Depe
 
 @router.patch("/{task_id}/complete" , response_model=TaskReponse)
 async def mark_task_complete(task_id: int ,current_user: User = Depends(get_current_user), session: Session = Depends(get_session)) -> TaskReponse:
-    task = session.exec(select(Tasks).where(Tasks.userId == current_user and Tasks.id == task_id))
+    task = session.exec(select(Tasks).where(Tasks.userId == current_user.id , Tasks.id == task_id)).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     if task.completed:
@@ -102,7 +101,7 @@ async def mark_task_complete(task_id: int ,current_user: User = Depends(get_curr
 
 @router.patch("/{task_id}/incomplete" , response_model=TaskReponse)
 async def mark_task_incomplete(task_id: int,current_user: User = Depends(get_current_user), session: Session = Depends(get_session)) -> TaskReponse:
-    task = session.exec(select(Tasks).where(Tasks.userId == current_user and Tasks.id == task_id))
+    task = session.exec(select(Tasks).where(Tasks.userId == current_user.id, Tasks.id == task_id)).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     if not task.completed:
@@ -118,7 +117,7 @@ async def mark_task_incomplete(task_id: int,current_user: User = Depends(get_cur
 
 @router.delete("/{task_id}" , response_model=dict[str, str])
 async def delete_task(task_id: int ,current_user: User = Depends(get_current_user), session: Session = Depends(get_session)) -> dict[str, str]:
-    task = session.exec(select(Tasks).where(Tasks.userId == current_user and Tasks.id == task_id))
+    task = session.exec(select(Tasks).where(Tasks.userId == current_user.id , Tasks.id == task_id)).first()
     if not task:
         raise HTTPException(status_code=404 , detail="Task not found")
     session.delete(task)

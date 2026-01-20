@@ -19,15 +19,16 @@ async def get_current_user(
     if payload is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED , detail="Invalid or Expire token")
     
-    user_id = payload.get("sub")
+    username = payload.get("sub")
 
-    if user_id is None:
+    if username is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED , detail="Invalid Token payload")
     
-    result = await session.exec(select(User).where(User.id == user_id))
+    result =  session.exec(select(User).where(User.username == username))
     user = result.first()
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED , detail="user not found")
 
+    print("\n[+] User " , user)
     return user

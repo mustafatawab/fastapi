@@ -3,7 +3,7 @@ from sqlmodel import Session, select, SQLModel, Field
 from database import get_session
 from core.security import hash_password, verify_password ,create_access_token, verify_access_token
 from models.users import User, UserCreate, UserLogin
-
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=['auth'])
 
@@ -45,8 +45,8 @@ async def register_user(user: UserCreate, session: Session = Depends(get_session
 
 
 @router.post("/login", response_model=dict[str, str])
-async def login_user(user: UserLogin, session: Session = Depends(get_session)):
-    print("\n Login attempt for email:", user.email)  # Debugging line
+async def login_user(user: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
+    print("\n Login attempt for username :", user.username)  # Debugging line
     existing_user = session.exec(select(User).where(User.username == user.username)).first()
     if not existing_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
