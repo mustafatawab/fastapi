@@ -32,9 +32,9 @@ router = APIRouter(prefix="/auth", tags=['auth'])
 @router.post("/register", response_model=dict[str, str])
 async def register_user(user: UserCreate, session: Session = Depends(get_session)):
     
-    existing_user = session.exec(select(User).where(User.email == user.email)).first()
+    existing_user = session.exec(select(User).where(User.email == user.email or User.username == user.username)).first()
     if existing_user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email or username already registered")
     hashed_password = hash_password(user.password)
     new_user = User(name=user.name , username=user.username, email=user.email , password=hashed_password)
     session.add(new_user)
@@ -47,7 +47,7 @@ async def register_user(user: UserCreate, session: Session = Depends(get_session
 @router.post("/login", response_model=dict[str, str])
 async def login_user(user: UserLogin, session: Session = Depends(get_session)):
     print("\n Login attempt for email:", user.email)  # Debugging line
-    existing_user = session.exec(select(User).where(User.email == user.email)).first()
+    existing_user = session.exec(select(User).where(User.username == user.username)).first()
     if not existing_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     

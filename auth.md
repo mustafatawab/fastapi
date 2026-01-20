@@ -1,4 +1,4 @@
-#### Folder Structure 
+### Folder Structure 
 
 ```
 app/
@@ -27,14 +27,14 @@ app/
 
 ```
 
-##### Rule
+#### Rule
 - ❌ Routers should NOT import from database.py directly except get_session
 - ❌ JWT logic should NOT be in routers
 - ✅ Auth logic lives in auth/
 
 
 
-#### Step 1
+### Step 1
 
 Command : `uv add pydantic-settings`
 
@@ -63,7 +63,7 @@ def get_settings() -> Settings:
 ```
 
 
-#### Step 2 - Password Hashing and JWT
+### Step 2 - Password Hashing and JWT
 
 Command: `uv add python-jose "pwdlib[argon2]"`
 
@@ -111,7 +111,7 @@ def decode_token(token) -> dict | None:
 
 
 
-#### Step 3 - Database Session
+### Step 3 - Database Session
 
 command: `uv add sqlmodel psycopg2-binary`
 
@@ -138,7 +138,7 @@ def get_session():
 
 ```
 
-#### Step 4 - Create Models 
+### Step 4 - Create Models 
 `models/user.py`
 
 ```python
@@ -172,7 +172,7 @@ class Task(SQLModel, table=True):
 ```
 
 
-#### Step 5 - Auth Dependency (Most Important)
+### Step 5 - Auth Dependency (Most Important)
 
 `auth/dependency.py`
 
@@ -211,7 +211,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme) , session: Sessio
 ```
 
 
-#### Step 6 - Auth Router (Register & Login)
+### Step 6 - Auth Router (Register & Login)
 
 `routes/auth.py`
 
@@ -263,7 +263,7 @@ async def login(user: UserLogin, session: Session = Depend(get_session)):
 
 
 
-#### Step 7 - Protected Tasks API
+### Step 7 - Protected Tasks API
 
 `routers/tasks.py`
 
@@ -305,7 +305,7 @@ async def get_tasks(current_user: User = Depends(get_current_user) , session: Se
 
 
 
-#### Step 8 - Main.py 
+### Step 8 - Main.py 
 ```python
 from fastapi import FastAPI
 from routers.tasks import router as task_router
