@@ -36,7 +36,7 @@ async def register_user(user: UserCreate, session: Session = Depends(get_session
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     hashed_password = hash_password(user.password)
-    new_user = User(name=user.name ,email=user.email , password=hashed_password)
+    new_user = User(name=user.name , username=user.username, email=user.email , password=hashed_password)
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
@@ -54,7 +54,7 @@ async def login_user(user: UserLogin, session: Session = Depends(get_session)):
     if not verify_password(user.password, existing_user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    token = create_access_token(data={"user_id": existing_user.id, "email": existing_user.email })
+    token = create_access_token(data={"sub" : existing_user.username , "email": existing_user.email })
 
     return {"access_token": token, "token_type": "bearer"}
 
