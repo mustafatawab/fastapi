@@ -300,7 +300,26 @@ async def get_tasks(current_user: User = Depends(get_current_user) , session: Se
     return tasks
 
 
+@router.get("/{task_id}")
+async def get_single_task(task_id: int, current_user: User = Depends(get_current_user) , session: Session = Depends(get_session)):
+    task = session.exec(select(Tasks).where(Tasks.id == task_id, Tasks.userId == current_user.id)).first()
+    if not task:
+        raise HTTPException(status_code=404, detail='task not found')
+    return task
 
+
+
+@router.post("/{task_id}")
+async def update_task(task_id: int,update_task: UpdateTask current_user: User = Depends(get_current_user) , session:Session=Depends(get_session)):
+    task = session.exec(select(Tasks).where(Tasks.id == task_id, Tasks.userId == current_user.id)).first()
+    if not task:
+        raise HTTPException(status_code=404, detail='task not found')
+    task.title = update_task.title
+    task.completd = update_task.completed
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
 ```
 
 
