@@ -209,3 +209,121 @@ async def get_current_user(token: str = Depends(oauth2_scheme) , session: Sessio
 
 
 ```
+
+
+#### Step 6 - Auth Router (Register & Login)
+
+`routes/auth.py`
+
+```python
+from fastapi import APIRouter, Depends, HTTException
+from sqlmodel import Session, select
+
+from database import get_session
+from models.users import User
+from schemas.users import UserCreate, UserLogin, UserResponse
+
+from auth.security import has_password, verify_password, create_access_token
+
+
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+@router.post("/register")
+async def register(user: UserCreate , session : Session = Depends(get_session)):
+    existing_user = session.exec(selec(User).where(user.email == User.email or user.username == User.username)).first()
+    if existing_user:
+        raise HTTPException(status_code=404, detail='Email or Username already exists')
+
+
+    db_user = User(email=user.email, username=user.username, password=hash_password(user.password))
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    return {"message" : "User registered successfully"}
+
+
+@router.post("/login")
+async def login(user: UserLogin, session: Session = Depend(get_session)):
+    db_user = session.exec(selec(User).where(User.username == user.username)).first()
+
+    if not db_user or not verify_password(user.password, db_user.password):
+        raise HTTPException(status_code=404, detail='invalid credentails')
+    
+    token = create_access_token({"user_id" : db_user.id , "username" : db_user.username})
+
+    return {"access_token_type" : "Bearer" , "access_token" : token}
+
+
+
+
+```
+
+
+
+#### Step 7 - Protected Tasks API
+
+`routers/tasks.py`
+
+```python
+from fastapi import APIRouter,Depends, HTTPException
+from sqlmodel import Session, select
+
+from database import get_session
+from auth.dependency import get_current_user
+
+from models.tasks import Tasks
+from schemas.tasks import TasksCreate , TastRead, TaskUpdate
+from models.users import Users
+
+router = APIRouter(prefix="/tasks" , tags=["Tasks"] )
+
+@routers.post("/")
+async def create_tasks(task: TasksCreate, current_user: User = Depends(get_current_user) , session: Session = Depends(get_session)):
+    new_task = Tasks(title=task.title, user_id=current_user.id)
+
+    session.add(new_task)
+    session.commit()
+    session.refresh(new_task)
+
+    return new_task
+
+
+
+@router.get("/")
+async def get_tasks(current_user: User = Depends(get_current_user) , session: Session = Depends(get_session)):
+
+    tasks = session.exec(selec(Tasks).where(Tasks.user_id == current_user.id))
+
+    return tasks
+
+
+
+```
+
+
+
+#### Step 8 - Main.py 
+```python
+from fastapi import FastAPI
+from routers.tasks import router as task_router
+from routers.users import router as user_router
+from contextlib import asynccontextmanager 
+from database import create_tables
+
+@asyncontextmanager
+async def lifespan(app: FastAPI)
+    create_tables()
+    yield
+
+
+
+app = FastAPI(lifespan=lifespan, title='Task API' , version='1.0.0')
+
+app.include_router(task_router)
+app.include_router(user_router)
+
+
+```
