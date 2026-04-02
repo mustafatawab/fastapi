@@ -28,7 +28,7 @@ def verify_password(plain_pass: str, hashed_pass: str):
 
 def create_jwt_token(data: dict):
     encode = data.copy()
-    exp_time = datetime.today() + timedelta(days=1)
+    exp_time = datetime.today() + timedelta(days=1) # 1 day
     encode.update({"exp" : exp_time})
     token = jwt.encode(encode , get_settings().JWT_SECRET)
     return token

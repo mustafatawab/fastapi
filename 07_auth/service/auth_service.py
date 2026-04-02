@@ -26,10 +26,7 @@ class AuthService:
 
     def login(self, user: UserLogin , session: Session):
         ex_user = self.existing_user(user.email, session)
-        print(f"\n[DEBUG] Login attempt:")
-        print(f"  Email: {user.email}")
-        print(f"  Input password: {user.password}")
-        print(f"  Found user: {ex_user}")
+        
         if ex_user:
             print(f"  Stored hash: {ex_user.hash_password}")
         
@@ -37,7 +34,7 @@ class AuthService:
             raise HTTPException(status_code=401, detail="User or email not found")
 
         verification = verify_password(user.password , ex_user.hash_password)
-        print(f"  Final verification result: {verification}")
+        
         
         if not verification:
             raise HTTPException(status_code=401, detail="Password is incorrect")

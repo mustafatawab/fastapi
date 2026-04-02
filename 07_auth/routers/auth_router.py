@@ -5,6 +5,8 @@ from schema.user import UserLogin, UserRegister, UserResponse
 from service.auth_service import AuthService
 from auth.security import decode_jwt_token
 from models.user import User as UserTable
+from auth.dependency import get_user
+
 
 auth = AuthService()
 
@@ -26,31 +28,18 @@ def user_login(response : Response , user: UserLogin , session: Session = Depend
 
     return {
         "message" : "Logged In Successfuly",
-        "token" : token
     }
 
 
-@router.get("/me")
-def get_me(request: Request, session: Session = Depends(get_session)):
-    token = request.cookies.get("access_token")
 
-    if not token:
-        raise HTTPException(status_code=400 , detail="User is not logged in")
+@router.get("/me", response_model=UserResponse)
+def get_logged_in_user(current_user: UserTable = Depends(get_user), session: Session = Depends(get_session)):
+    return current_user
+    
 
-
-    data = decode_jwt_token(token)
-
-    print("\n Payload Data " , data)
-    # if data is None:
-    #     raise HTTPException(status_code=400 , detail="User is not logged in")
-
-    user = session.exec(select(UserTable).where(UserTable.email == data["email"])).first()
-
-    return user
-
-
-@router.get("/logout")
-def logout(response: Response):
+@router.post("/logout")
+def logout_user(response: Response):
     response.delete_cookie("access_token")
-    return {"message" : "user logout succesfully"}
-
+    return {
+        "message"  : 'You have been logged out successfully...........................'
+    }
