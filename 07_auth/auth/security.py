@@ -34,6 +34,15 @@ def create_jwt_token(data: dict):
     return token
 
 
+def create_refresh_token(data: dict):
+    encode = data.copy()
+    exp_time = datetime.today() + timedelta(days=7) # 1 day
+    encode.update({"exp" : exp_time})
+    refresh_token = jwt.encode(encode , get_settings().JWT_SECRET)
+    return refresh_token
+
+
+
 
 def decode_jwt_token(token: str):
     try:

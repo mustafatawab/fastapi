@@ -4,7 +4,8 @@ from functools import lru_cache
 class Settings(BaseSettings):
     DATABASE_URL: str
     JWT_SECRET_KEY: str
-    TOKEN_EXPIRE_MINUTES: int = 60 * 24 
+    TOKEN_EXPIRE_MINUTES: int = 24 * 60 * 60
+    REFRESH_TOKEN_EXPIRE_TIME: int = 7 * 60 * 60 * 24 
 
     class Config:
         env_file = ".env"

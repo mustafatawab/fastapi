@@ -3,9 +3,10 @@ from db.session import get_session
 from sqlmodel import Session, select
 from schema.user import UserLogin, UserRegister, UserResponse
 from service.auth_service import AuthService
-from auth.security import decode_jwt_token
+from auth.security import decode_jwt_token, create_jwt_token
 from models.user import User as UserTable
 from auth.dependency import get_user
+
 
 
 auth = AuthService()
@@ -22,9 +23,14 @@ def user_registeration(user: UserRegister , session: Session = Depends(get_sessi
 
 @router.post("/login")
 def user_login(response : Response , user: UserLogin , session: Session = Depends(get_session)):
-    token = auth.login(user, session)
+    result = auth.login(user, session)
 
-    response.set_cookie(key="access_token", value=token , httponly=True)
+    access_token = result.get("access_token")
+    refresh_token = result.get("refresh_token")
+
+
+    response.set_cookie(key="access_token", value=access_token , httponly=True)
+    response.set_cookie(key="refresh_token", value=refresh_token , httponly=True)
 
     return {
         "message" : "Logged In Successfuly",
@@ -43,3 +49,33 @@ def logout_user(response: Response):
     return {
         "message"  : 'You have been logged out successfully...........................'
     }
+
+
+
+@router.post("/refresh")
+def refresh_the_access_token(response: Response, request: Request):
+
+    refresh_token = request.cookies.get("refresh_token")
+
+    if not refresh_token:
+        raise HTTPException(status_code=402 , detail="Refresh Token does not exists")
+    
+
+    email = decode_jwt_token(refresh_token).get("email")
+
+    access_token = create_jwt_token({"email" : email})
+
+
+    response.set_cookie(key="access_token" , value=access_token)
+
+    return {"message" : "Token refreshed successfully"}
+
+        
+
+
+    
+
+
+
+
+

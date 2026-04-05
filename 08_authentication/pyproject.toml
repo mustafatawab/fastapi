@@ -1,14 +1,14 @@
 [project]
-name = "authentication"
+name = "08-authentication"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi[standard]>=0.135.1",
+    "fastapi[standard]>=0.135.3",
     "psycopg2-binary>=2.9.11",
     "pwdlib[argon2]>=0.3.0",
     "pydantic-settings>=2.13.1",
     "python-jose[cryptography]>=3.5.0",
-    "sqlmodel>=0.0.37",
+    "sqlmodel>=0.0.38",
 ]

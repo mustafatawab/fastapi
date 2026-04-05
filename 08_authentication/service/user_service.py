@@ -42,4 +42,4 @@ class UserService:
 
         token = create_access_token(data , expire_time=timedelta(minutes=60))
 
-        return {"message" : "User logged in successfully", "access_token" : token}
+        return token

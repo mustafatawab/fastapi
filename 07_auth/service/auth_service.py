@@ -1,4 +1,4 @@
-from auth.security import password_hashing , verify_password ,  create_jwt_token ,  decode_jwt_token
+from auth.security import password_hashing , verify_password ,  create_jwt_token ,  decode_jwt_token, create_refresh_token
 from sqlmodel import Session, select
 from schema.user import UserRegister, UserLogin, UserResponse
 from models.user import User as UserTable
@@ -44,4 +44,8 @@ class AuthService:
             "email" : ex_user.email,
         }
 
-        return create_jwt_token(data)
+        access_token =  create_jwt_token(data)
+        refresh_token = create_refresh_token(data)
+
+
+        return {"access_token" : access_token , "refresh_token" : refresh_token}

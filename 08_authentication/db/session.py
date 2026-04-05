@@ -1,4 +1,4 @@
-from sqlmodel import Session, SQLModel
+from sqlmodel import SQLModel, Session
 from db.engine import engine
 
 
